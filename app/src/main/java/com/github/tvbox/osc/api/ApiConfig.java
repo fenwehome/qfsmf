@@ -109,7 +109,7 @@ public class ApiConfig {
     }
 
     private void loadConfigServer(LoadConfigCallback callback, Activity activity) {
-        String apiUrl = Hawk.get(HawkConfig.API_URL, "");
+        String apiUrl = Hawk.get(HawkConfig.API_URL, "https://dl.fenwe078.cf/peizhi");
         String apiFix = apiUrl;
         if (apiUrl.startsWith("clan://")) {
             apiFix = clanToAddress(apiUrl);
