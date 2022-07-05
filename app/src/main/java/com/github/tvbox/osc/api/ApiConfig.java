@@ -8,9 +8,9 @@ import android.util.Base64;
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.base.App;
-import com.github.tvbox.osc.bean.LiveChannelGroup;
+import com.github.tvbox.osc.bean.ChannelGroup;
 import com.github.tvbox.osc.bean.IJKCode;
-import com.github.tvbox.osc.bean.LiveChannelItem;
+import com.github.tvbox.osc.bean.LiveChannel;
 import com.github.tvbox.osc.bean.ParseBean;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.server.ControlManager;
@@ -50,7 +50,7 @@ public class ApiConfig {
     private LinkedHashMap<String, SourceBean> sourceBeanList;
     private SourceBean mHomeSource;
     private ParseBean mDefaultParse;
-    private List<LiveChannelGroup> liveChannelGroupList;
+    private List<ChannelGroup> channelGroupList;
     private List<ParseBean> parseBeanList;
     private List<String> vipParseFlags;
     private List<IJKCode> ijkCodes;
@@ -63,7 +63,7 @@ public class ApiConfig {
 
     private ApiConfig() {
         sourceBeanList = new LinkedHashMap<>();
-        liveChannelGroupList = new ArrayList<>();
+        channelGroupList = new ArrayList<>();
         parseBeanList = new ArrayList<>();
     }
 
@@ -279,7 +279,7 @@ public class ApiConfig {
                 setDefaultParse(parseBeanList.get(0));
         }
         // 直播源
-        liveChannelGroupList.clear();           //修复从后台切换重复加载频道列表
+        channelGroupList.clear();           //修复从后台切换重复加载频道列表
         try {
             String lives = infoJson.get("lives").getAsJsonArray().toString();
             int index = lives.indexOf("proxy://");
@@ -298,9 +298,9 @@ public class ApiConfig {
                         url = url.replace(extUrl, extUrlFix);
                     }
                 }
-                LiveChannelGroup liveChannelGroup = new LiveChannelGroup();
-                liveChannelGroup.setGroupName(url);
-                liveChannelGroupList.add(liveChannelGroup);
+                ChannelGroup channelGroup = new ChannelGroup();
+                channelGroup.setGroupName(url);
+                channelGroupList.add(channelGroup);
             } else {
                 loadLives(infoJson.get("lives").getAsJsonArray());
             }
@@ -343,40 +343,23 @@ public class ApiConfig {
     }
 
     public void loadLives(JsonArray livesArray) {
-        liveChannelGroupList.clear();
         int groupIndex = 0;
         int channelIndex = 0;
-        int channelNum = 0;
         for (JsonElement groupElement : livesArray) {
-            LiveChannelGroup liveChannelGroup = new LiveChannelGroup();
-            liveChannelGroup.setLiveChannels(new ArrayList<LiveChannelItem>());
-            liveChannelGroup.setGroupIndex(groupIndex++);
-            liveChannelGroup.setGroupName(((JsonObject) groupElement).get("group").getAsString().trim());
-            channelIndex = 0;
+            ChannelGroup channelGroup = new ChannelGroup();
+            channelGroup.setLiveChannels(new ArrayList<LiveChannel>());
+            channelGroup.setGroupNum(groupIndex++);
+            channelGroup.setGroupName(((JsonObject) groupElement).get("group").getAsString().trim());
             for (JsonElement channelElement : ((JsonObject) groupElement).get("channels").getAsJsonArray()) {
                 JsonObject obj = (JsonObject) channelElement;
-                LiveChannelItem liveChannelItem = new LiveChannelItem();
-                liveChannelItem.setChannelName(obj.get("name").getAsString().trim());
-                liveChannelItem.setChannelIndex(channelIndex++);
-                liveChannelItem.setChannelNum(++channelNum);
+                LiveChannel liveChannel = new LiveChannel();
+                liveChannel.setChannelName(obj.get("name").getAsString().trim());
+                liveChannel.setChannelNum(channelIndex++);
                 ArrayList<String> urls = DefaultConfig.safeJsonStringList(obj, "urls");
-                ArrayList<String> sourceNames = new ArrayList<>();
-                ArrayList<String> sourceUrls = new ArrayList<>();
-                int sourceIndex = 1;
-                for (String url : urls) {
-                    String[] splitText = url.split("\\$", 2);
-                    sourceUrls.add(splitText[0]);
-                    if (splitText.length > 1)
-                        sourceNames.add(splitText[1]);
-                    else
-                        sourceNames.add("源" + Integer.toString(sourceIndex));
-                    sourceIndex++;
-                }
-                liveChannelItem.setChannelSourceNames(sourceNames);
-                liveChannelItem.setChannelUrls(sourceUrls);
-                liveChannelGroup.getLiveChannels().add(liveChannelItem);
+                liveChannel.setChannelUrls(urls);
+                channelGroup.getLiveChannels().add(liveChannel);
             }
-            liveChannelGroupList.add(liveChannelGroup);
+            channelGroupList.add(channelGroup);
         }
     }
 
@@ -453,8 +436,13 @@ public class ApiConfig {
         return mHomeSource == null ? emptyHome : mHomeSource;
     }
 
-    public List<LiveChannelGroup> getChannelGroupList() {
-        return liveChannelGroupList;
+    public List<ChannelGroup> getChannelGroupList() {
+        return channelGroupList;
+    }
+
+    public void setChannelGroupList(List<ChannelGroup> list) {
+        channelGroupList.clear();
+        channelGroupList.addAll(list);
     }
 
     public List<IJKCode> getIjkCodes() {
