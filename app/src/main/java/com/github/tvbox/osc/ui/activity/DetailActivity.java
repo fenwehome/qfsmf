@@ -2,10 +2,13 @@ package com.github.tvbox.osc.ui.activity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Html;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -113,6 +116,12 @@ public class DetailActivity extends BaseActivity {
     }
 
     private void initView() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                tvPlay.requestFocus();
+            }
+        },500);
         llLayout = findViewById(R.id.llLayout);
         llPlayerPlace = findViewById(R.id.previewPlayerPlace);
         llPlayerFragmentContainer = findViewById(R.id.previewPlayer);
@@ -277,8 +286,8 @@ public class DetailActivity extends BaseActivity {
                     seriesAdapter.getData().get(vodInfo.playIndex).selected = true;
                     seriesAdapter.notifyItemChanged(vodInfo.playIndex);
                     jumpToPlay();
-                    if (showPreview && !fullWindows)
-                        toggleFullPreview();
+                    //选集全屏 此处取消注释
+//                    if (showPreview && !fullWindows) toggleFullPreview();
                 }
             }
         });
@@ -463,15 +472,15 @@ public class DetailActivity extends BaseActivity {
                 if (event.obj instanceof Integer) {
                     int index = (int) event.obj;
                     // if (index != vodInfo.playIndex) {
-                        seriesAdapter.getData().get(vodInfo.playIndex).selected = false;
-                        seriesAdapter.notifyItemChanged(vodInfo.playIndex);
-                        seriesAdapter.getData().get(index).selected = true;
-                        seriesAdapter.notifyItemChanged(index);
-                        mGridView.setSelection(index);
-                        vodInfo.playIndex = index;
-                        //保存历史
-                        insertVod(sourceKey, vodInfo);
-                   // }
+                    seriesAdapter.getData().get(vodInfo.playIndex).selected = false;
+                    seriesAdapter.notifyItemChanged(vodInfo.playIndex);
+                    seriesAdapter.getData().get(index).selected = true;
+                    seriesAdapter.notifyItemChanged(index);
+                    mGridView.setSelection(index);
+                    vodInfo.playIndex = index;
+                    //保存历史
+                    insertVod(sourceKey, vodInfo);
+                    // }
                 } else if (event.obj instanceof JSONObject) {
                     vodInfo.playerCfg = ((JSONObject) event.obj).toString();
                     //保存历史
@@ -656,6 +665,18 @@ public class DetailActivity extends BaseActivity {
             }
         }
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (showPreview && !fullWindows) {
+            Rect editTextRect = new Rect();
+            llPlayerFragmentContainerBlock.getHitRect(editTextRect);
+            if (editTextRect.contains((int) ev.getX(), (int) ev.getY())) {
+                return true;
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     // preview
