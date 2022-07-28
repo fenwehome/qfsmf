@@ -178,7 +178,7 @@ public class VodController extends BaseController {
         mPlayerRetry.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                listener.replay();
+                listener.replay(true);
                 hideBottom();
             }
         });
@@ -252,7 +252,7 @@ public class VodController extends BaseController {
                     mPlayerConfig.put("pl", playerType);
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
-                    listener.replay();
+                    listener.replay(false);
                     // hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -278,7 +278,7 @@ public class VodController extends BaseController {
                     mPlayerConfig.put("ijk", ijk);
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
-                    listener.replay();
+                    listener.replay(false);
                     hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -306,8 +306,8 @@ public class VodController extends BaseController {
                     int step = Hawk.get(HawkConfig.PLAY_TIME_STEP, 5);
                     int st = mPlayerConfig.getInt("st");
                     st += step;
-                    //片头最大跳过时间10分钟
-                    if (st > 60 * 10)
+                    //片头最大跳过时间4分钟
+                    if (st > 60 * 4)
                         st = 0;
                     mPlayerConfig.put("st", st);
                     updatePlayerCfgView();
@@ -324,8 +324,8 @@ public class VodController extends BaseController {
                     int step = Hawk.get(HawkConfig.PLAY_TIME_STEP, 5);
                     int et = mPlayerConfig.getInt("et");
                     et += step;
-                    //片尾最大跳过时间10分钟
-                    if (et > 60 * 10)
+                    //片尾最大跳过时间4分钟
+                    if (et > 60 * 4)
                         et = 0;
                     mPlayerConfig.put("et", et);
                     updatePlayerCfgView();
@@ -406,7 +406,7 @@ public class VodController extends BaseController {
 
         void updatePlayerCfg();
 
-        void replay();
+        void replay(boolean replay);
 
         void errReplay();
     }
