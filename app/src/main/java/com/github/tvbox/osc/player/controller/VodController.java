@@ -97,14 +97,15 @@ public class VodController extends BaseController {
     TextView mPlayerBtn;
     TextView mPlayerIJKBtn;
     TextView mPlayerRetry;
+    TextView mPlayrefresh;
     TextView mPlayerTimeStartBtn;
     TextView mPlayerTimeSkipBtn;
     TextView mPlayerTimeStepBtn;
 
     Handler myHandle;
     Runnable myRunnable;
-    int myHandleSeconds = 7000;//闲置多少毫秒秒关闭底栏  默认7秒
-    
+    int myHandleSeconds = 6000;//闲置多少毫秒秒关闭底栏  默认6秒
+
     @Override
     protected void initView() {
         super.initView();
@@ -119,6 +120,7 @@ public class VodController extends BaseController {
         mParseRoot = findViewById(R.id.parse_root);
         mGridView = findViewById(R.id.mGridView);
         mPlayerRetry = findViewById(R.id.play_retry);
+        mPlayrefresh = findViewById(R.id.play_refresh);
         mNextBtn = findViewById(R.id.play_next);
         mPreBtn = findViewById(R.id.play_pre);
         mPlayerScaleBtn = findViewById(R.id.play_scale);
@@ -136,7 +138,7 @@ public class VodController extends BaseController {
                 hideBottom();
             }
         };
-        
+
         mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
         ParseAdapter parseAdapter = new ParseAdapter();
         parseAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
@@ -193,6 +195,13 @@ public class VodController extends BaseController {
             @Override
             public void onClick(View v) {
                 listener.replay(true);
+                hideBottom();
+            }
+        });
+        mPlayrefresh.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener.replay(false);
                 hideBottom();
             }
         });
@@ -273,6 +282,7 @@ public class VodController extends BaseController {
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
+                    view.requestFocus();
                     // hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -301,7 +311,8 @@ public class VodController extends BaseController {
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
-                    hideBottom();
+                    view.requestFocus();
+//                    hideBottom();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -332,8 +343,8 @@ public class VodController extends BaseController {
                     int step = Hawk.get(HawkConfig.PLAY_TIME_STEP, 5);
                     int st = mPlayerConfig.getInt("st");
                     st += step;
-                    //片头最大跳过时间4分钟
-                    if (st > 60 * 4)
+                    //片头最大跳过时间10分钟
+                    if (st > 60 * 10)
                         st = 0;
                     mPlayerConfig.put("st", st);
                     updatePlayerCfgView();
@@ -352,8 +363,8 @@ public class VodController extends BaseController {
                     int step = Hawk.get(HawkConfig.PLAY_TIME_STEP, 5);
                     int et = mPlayerConfig.getInt("et");
                     et += step;
-                    //片尾最大跳过时间4分钟
-                    if (et > 60 * 4)
+                    //片尾最大跳过时间10分钟
+                    if (et > 60 * 10)
                         et = 0;
                     mPlayerConfig.put("et", et);
                     updatePlayerCfgView();
@@ -451,7 +462,7 @@ public class VodController extends BaseController {
 
     @Override
     protected void setProgress(int duration, int position) {
-        
+
         if (mIsDragging) {
             return;
         }
@@ -577,13 +588,13 @@ public class VodController extends BaseController {
         if (super.onKeyEvent(event)) {
             return true;
         }
+        int keyCode = event.getKeyCode();
+        int action = event.getAction();
         if (isBottomVisible()) {
             myHandle.postDelayed(myRunnable, myHandleSeconds);
             return super.dispatchKeyEvent(event);
         }
         boolean isInPlayback = isInPlaybackState();
-        int keyCode = event.getKeyCode();
-        int action = event.getAction();
         if (action == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 if (isInPlayback) {
@@ -595,8 +606,8 @@ public class VodController extends BaseController {
                     togglePlay();
                     return true;
                 }
-//            } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {  // 闲置开启计时关闭透明底栏
-            } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+//            } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {  return true;// 闲置开启计时关闭透明底栏
+            } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode== KeyEvent.KEYCODE_MENU) {
                 if (!isBottomVisible()) {
                     showBottom();
                     myHandle.postDelayed(myRunnable, myHandleSeconds);

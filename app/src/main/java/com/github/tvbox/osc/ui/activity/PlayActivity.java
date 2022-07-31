@@ -192,10 +192,15 @@ public class PlayActivity extends BaseActivity {
     }
 
     void setTip(String msg, boolean loading, boolean err) {
-        mPlayLoadTip.setText(msg);
-        mPlayLoadTip.setVisibility(View.VISIBLE);
-        mPlayLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
-        mPlayLoadErr.setVisibility(err ? View.VISIBLE : View.GONE);
+        runOnUiThread(new Runnable() {//影魔 解决解析偶发闪退
+            @Override
+            public void run() {
+                mPlayLoadTip.setText(msg);
+                mPlayLoadTip.setVisibility(View.VISIBLE);
+                mPlayLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+                mPlayLoadErr.setVisibility(err ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
     void hideTip() {
@@ -491,7 +496,7 @@ public class PlayActivity extends BaseActivity {
         }
         sourceViewModel.getPlay(sourceKey, mVodInfo.playFlag, progressKey, vs.url);
         //执行重新播放后还原之前的进度
- //       if (reset) CacheManager.save(MD5.string2MD5(progressKey),bodyKey);
+//        if (reset) CacheManager.save(MD5.string2MD5(progressKey),bodyKey);
     }
 
     private String playSubtitle;
@@ -540,7 +545,7 @@ public class PlayActivity extends BaseActivity {
         }
         String msg = jsonPlayData.optString("msg", "");
         if (url.startsWith("//")) {
-            url = "https:" + url;
+            url = "http:" + url;
         }
         if (!url.startsWith("http")) {
             return null;
