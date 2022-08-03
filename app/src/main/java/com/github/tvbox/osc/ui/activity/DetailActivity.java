@@ -234,7 +234,6 @@ public class DetailActivity extends BaseActivity {
 
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
-
             }
         });
         mGridViewFlag.setOnItemListener(new TvRecyclerView.OnItemListener() {
@@ -284,12 +283,18 @@ public class DetailActivity extends BaseActivity {
                         seriesAdapter.getData().get(position).selected = true;
                         seriesAdapter.notifyItemChanged(position);
                         vodInfo.playIndex = position;
+                        reload = true;
                     }
-                    seriesAdapter.getData().get(vodInfo.playIndex).selected = true;
-                    seriesAdapter.notifyItemChanged(vodInfo.playIndex);
+                    //解决当前集不刷新的BUG
+                    if(!vodInfo.playFlag.equals(preFlag)) {
+                        reload = true;
+                    }
+
+//                    seriesAdapter.getData().get(vodInfo.playIndex).selected = true;
+//                    seriesAdapter.notifyItemChanged(vodInfo.playIndex);
                     //选集全屏 想选集不全屏的注释下面一行
                    if (showPreview && !fullWindows) toggleFullPreview();
-                   jumpToPlay();
+                   if (!showPreview || reload) jumpToPlay();
                 }
             }
         });
@@ -298,8 +303,10 @@ public class DetailActivity extends BaseActivity {
 
     private List<Runnable> pauseRunnable = null;
 
+    private String preFlag="";
     private void jumpToPlay() {
         if (vodInfo != null && vodInfo.seriesMap.get(vodInfo.playFlag).size() > 0) {
+            preFlag = vodInfo.playFlag;
             Bundle bundle = new Bundle();
             //保存历史
             insertVod(sourceKey, vodInfo);
