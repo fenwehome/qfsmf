@@ -1,5 +1,6 @@
 package com.github.tvbox.osc.ui.activity;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -61,6 +62,7 @@ import org.json.JSONObject;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,6 +73,7 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
  * @date :2020/12/22
  * @description:
  */
+ 
 public class DetailActivity extends BaseActivity {
     private LinearLayout llLayout;
     private FragmentContainerView llPlayerFragmentContainer;
@@ -155,13 +158,8 @@ public class DetailActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().show(playFragment).commitAllowingStateLoss();
             tvPlay.setText("全屏");
         }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                tvPlay.requestFocus();
-            }
-        },500);
         tvSort.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onClick(View v) {
                 if (vodInfo != null && vodInfo.seriesMap.size() > 0) {
@@ -277,6 +275,7 @@ public class DetailActivity extends BaseActivity {
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 FastClickCheckUtil.check(view);
                 if (vodInfo != null && vodInfo.seriesMap.get(vodInfo.playFlag).size() > 0) {
+                    boolean reload = false;
                     if (vodInfo.playIndex != position) {
                         seriesAdapter.getData().get(vodInfo.playIndex).selected = false;
                         seriesAdapter.notifyItemChanged(vodInfo.playIndex);
