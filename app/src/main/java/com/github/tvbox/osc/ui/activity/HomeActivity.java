@@ -213,8 +213,15 @@ public class HomeActivity extends BaseActivity {
 
     private void initData() {
         SourceBean home = ApiConfig.get().getHomeSourceBean();
-        if (home != null && home.getName() != null && !home.getName().isEmpty())
-            tvName.setText(home.getName());
+        if (home != null && home.getName() != null && !home.getName().isEmpty()) {
+            if (home.getName() == "四个圈影视") {
+                tvName.setText(home.getName());
+            }
+            else {
+            tvName.setText("四个圈影视    " + home.getName());
+            }
+        }
+        
         if (dataInitOk && jarInitOk) {
             showLoading();
             sourceViewModel.getSort(ApiConfig.get().getHomeSourceBean().getKey());
