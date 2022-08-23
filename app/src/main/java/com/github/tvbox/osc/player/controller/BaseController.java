@@ -94,16 +94,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
-    private TextView mPlayLoadNetSpeed;
-    
-    private Runnable mRunnable = new Runnable() {
-        @Override
-        public void run() {
-            String format = String.format("%.2fMB/s", (float) mControlWrapper.getTcpSpeed() / 1024.0 / 1024.0);
-            mPlayLoadNetSpeed.setText(format);
-            mHandler.postDelayed(this, 1000);
-               }
-    };
 
     @Override
     protected void initView() {
