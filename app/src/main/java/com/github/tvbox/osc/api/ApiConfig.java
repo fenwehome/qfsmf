@@ -226,9 +226,8 @@ public class ApiConfig {
     }
 
     private void parseJson(String apiUrl, String jsonStr) {
-        //pyramid-add-start
+        //pyramid
         PythonLoader.getInstance().setConfig(jsonStr);
-        //pyramid-add-end
         JsonObject infoJson = new Gson().fromJson(jsonStr, JsonObject.class);
         // spider
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
@@ -401,7 +400,7 @@ public class ApiConfig {
     }
 
     public Spider getCSP(SourceBean sourceBean) {
-        //pyramid-add-start
+        //pyramid
         if (sourceBean.getApi().startsWith("py_")) {
             try {
                 return PythonLoader.getInstance().getSpider(sourceBean.getKey(), sourceBean.getExt());
@@ -410,12 +409,11 @@ public class ApiConfig {
                 return new SpiderNull();
             }
         }
-        //pyramid-add-end
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 
     public Object[] proxyLocal(Map param) {
-        //pyramid-add-start
+        //pyramid
         try {
             if(param.containsKey("api")){
                 String doStr = param.get("do").toString();
@@ -427,7 +425,6 @@ public class ApiConfig {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        //pyramid-add-end
         return jarLoader.proxyInvoke(param);
     }
 
