@@ -156,6 +156,7 @@ public class LivePlayActivity extends BaseActivity {
                         break;
                     case KeyEvent.KEYCODE_DPAD_LEFT:
                         playPreSource();
+                        showSettingGroup();
                         break;
                     case KeyEvent.KEYCODE_DPAD_RIGHT:
                         playNextSource();
