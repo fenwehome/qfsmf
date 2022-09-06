@@ -269,7 +269,7 @@ public class ApiConfig {
         // 需要使用vip解析的flag
         vipParseFlags = DefaultConfig.safeJsonStringList(infoJson, "flags");
         // 解析地址
-        parseBeanList = new ArrayList<>();
+        parseBeanList.clear();
         for (JsonElement opt : infoJson.get("parses").getAsJsonArray()) {
             JsonObject obj = (JsonObject) opt;
             ParseBean pb = new ParseBean();
@@ -406,29 +406,32 @@ public class ApiConfig {
     public Spider getCSP(SourceBean sourceBean) {
         //pyramid
         if (sourceBean.getApi().startsWith("py_")) {
-        try {
-            return PythonLoader.getInstance().getSpider(sourceBean.getKey(), sourceBean.getExt());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new SpiderNull();
+            try {
+                return PythonLoader.getInstance().getSpider(sourceBean.getKey(), sourceBean.getExt());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new SpiderNull();
+            }
         }
-    }
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 
     public Object[] proxyLocal(Map param) {
         //pyramid
-        try {
-        if(param.containsKey("api")){
-            String doStr = param.get("do").toString();
-            if(doStr.equals("ck"))
-                return PythonLoader.getInstance().proxyLocal("","",param);
-            SourceBean sourceBean = ApiConfig.get().getSource(doStr);
-            return PythonLoader.getInstance().proxyLocal(sourceBean.getKey(),sourceBean.getExt(),param);
+      try {
+            if(param.containsKey("api")){
+                String doStr = param.get("do").toString();
+                if(doStr.equals("ck"))
+                    return PythonLoader.getInstance().proxyLocal("","",param);
+                SourceBean sourceBean = ApiConfig.get().getSource(doStr);
+                return PythonLoader.getInstance().proxyLocal(sourceBean.getKey(),sourceBean.getExt(),param);
+            }else{
+                String doStr = param.get("do").toString();
+                if(doStr.equals("live")) return PythonLoader.getInstance().proxyLocal("","",param);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
         return jarLoader.proxyInvoke(param);
     }
 
