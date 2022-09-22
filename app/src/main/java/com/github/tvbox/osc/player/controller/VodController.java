@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -19,6 +20,9 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.IJKCode;
 import com.github.tvbox.osc.bean.ParseBean;
+import com.github.tvbox.osc.player.thirdparty.Kodi;
+import com.github.tvbox.osc.player.thirdparty.MXPlayer;
+import com.github.tvbox.osc.player.thirdparty.ReexPlayer;
 import com.github.tvbox.osc.subtitle.widget.SimpleSubtitleView;
 import com.github.tvbox.osc.ui.adapter.ParseAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
@@ -121,7 +125,8 @@ public class VodController extends BaseController {
     TextView mPlayLoadNetSpeed;
     TextView mVideoSize;
     public SimpleSubtitleView mSubtitleView;
-    public TextView mZimuBtn;
+    TextView mZimuBtn;
+    TextView mAudioTrackBtn;
 
     Handler myHandle;
     Runnable myRunnable;
@@ -180,6 +185,7 @@ public class VodController extends BaseController {
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
         mZimuBtn = findViewById(R.id.zimu_select);
+        mAudioTrackBtn = findViewById(R.id.audio_track_select);
 
         int subtitleTextSize = SubtitleHelper.getTextSize(mActivity);
         mSubtitleView.setTextSize(subtitleTextSize);
@@ -329,6 +335,41 @@ public class VodController extends BaseController {
             @Override
             public void onClick(View view) {
 //               myHandle.removeCallbacks(myRunnable);
+//                myHandle.postDelayed(myRunnable, myHandleSeconds);
+                try {
+                    int playerType = mPlayerConfig.getInt("pl");
+                    boolean playerVail = false;
+                    do {
+                        playerType++;
+                        if (playerType <= 2) {
+                            playerVail = true;
+                        } else if (playerType == 10) {
+                            playerVail = MXPlayer.getPackageInfo() != null;
+                        } else if (playerType == 11) {
+                            playerVail = ReexPlayer.getPackageInfo() != null;
+                        } else if (playerType == 12) {
+                            playerVail = Kodi.getPackageInfo() != null;
+                        } else if (playerType > 11) {
+                            playerType = 0;
+                            playerVail = true;
+                        }
+                    } while (!playerVail);
+                    mPlayerConfig.put("pl", playerType);
+                    updatePlayerCfgView();
+                    listener.updatePlayerCfg();
+                    listener.replay(false);
+//                    hideBottom();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mPlayerBtn.requestFocus();
+            }
+        });
+
+        mPlayerBtn.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+//                myHandle.removeCallbacks(myRunnable);
 //               myHandle.postDelayed(myRunnable, myHandleSeconds);
                 FastClickCheckUtil.check(view);
                 try {
@@ -385,6 +426,7 @@ public class VodController extends BaseController {
                 }
             }
         });
+        // takagen99: Add long press to reset counter
         mPlayerIJKBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -520,6 +562,23 @@ public class VodController extends BaseController {
                 hideBottom();
             }
         });
+        mZimuBtn.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                mSubtitleView.setVisibility(View.GONE);
+                hideBottom();
+                Toast.makeText(getContext(), "外挂字幕已关闭", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+        mAudioTrackBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                listener.selectAudioTrack();
+                hideBottom();
+            }
+        });
     }
 
     @Override
@@ -550,6 +609,7 @@ public class VodController extends BaseController {
             mPlayerTimeStartBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("st") * 1000));
             mPlayerTimeSkipBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("et") * 1000));
             mPlayerTimeStepBtn.setText(Hawk.get(HawkConfig.PLAY_TIME_STEP, 5) + "s");
+            mAudioTrackBtn.setVisibility((playerType == 1) ? VISIBLE : GONE);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -578,8 +638,10 @@ public class VodController extends BaseController {
         void replay(boolean replay);
 
         void errReplay();
-        
+
         void selectSubtitle();
+
+        void selectAudioTrack();
     }
 
     public void setListener(VodControlListener listener) {
