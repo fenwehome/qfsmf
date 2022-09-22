@@ -370,7 +370,7 @@ public class VodController extends BaseController {
             @Override
             public boolean onLongClick(View view) {
 //                myHandle.removeCallbacks(myRunnable);
-//               myHandle.postDelayed(myRunnable, myHandleSeconds);
+//                myHandle.postDelayed(myRunnable, myHandleSeconds);
                 FastClickCheckUtil.check(view);
                 try {
                     int playerType = mPlayerConfig.getInt("pl");
@@ -424,9 +424,9 @@ public class VodController extends BaseController {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                return true;
             }
         });
-        // takagen99: Add long press to reset counter
         mPlayerIJKBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
