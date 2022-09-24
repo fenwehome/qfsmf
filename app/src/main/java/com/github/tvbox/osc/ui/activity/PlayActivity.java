@@ -270,7 +270,11 @@ public class PlayActivity extends BaseActivity {
                         });
                     }
                 });
-                searchSubtitleDialog.setSearchWord(mVodInfo.playNote);
+                if(mVodInfo.playFlag.contains("Ali")||mVodInfo.playFlag.contains("parse")){
+                    searchSubtitleDialog.setSearchWord(mVodInfo.playNote);
+                }else {
+                    searchSubtitleDialog.setSearchWord(mVodInfo.name);
+                }
                 searchSubtitleDialog.show();
             }
         });
@@ -338,7 +342,9 @@ public class PlayActivity extends BaseActivity {
 
             @Override
             public String getDisplay(TrackInfoBean val) {
-                return val.index + " : " + val.language;
+//               return val.index + " : " + val.language;
+               String str = val.name.substring(val.name.substring(0, val.name.indexOf(",")).length()+1).trim();
+                return val.index + " : " + str;
             }
         }, new DiffUtil.ItemCallback<TrackInfoBean>() {
             @Override
@@ -381,8 +387,10 @@ public class PlayActivity extends BaseActivity {
                     mediaPlayer.pause();
                     long progress = mediaPlayer.getCurrentPosition();//保存当前进度，ijk 切换轨道 会有快进几秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
-                        ((IjkMediaPlayer)mediaPlayer).setTrack(value.index);
+                        mController.mSubtitleView.destroy();
+                        mController.mSubtitleView.clearSubtitleCache();
                         mController.mSubtitleView.isInternal = true;
+                        ((IjkMediaPlayer)mediaPlayer).setTrack(value.index);
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -489,9 +497,7 @@ public class PlayActivity extends BaseActivity {
             TrackInfo trackInfo = null;
             trackInfo = ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).getTrackInfo();
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
-                mController.mSubtitleView.isInternal = true;
                 mController.mSubtitleView.hasInternal = true;
-
             }
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
@@ -507,14 +513,15 @@ public class PlayActivity extends BaseActivity {
 
         mController.mSubtitleView.bindToMediaPlayer(mVideoView.getMediaPlayer());
         mController.mSubtitleView.setPlaySubtitleCacheKey(subtitleCacheKey);
-        if (!mController.mSubtitleView.isInternal) {
+        String subtitlePathCache = (String)CacheManager.getCache(MD5.string2MD5(subtitleCacheKey));
+        if (subtitlePathCache != null && !subtitlePathCache.isEmpty()) {
+            mController.mSubtitleView.setSubtitlePath(subtitlePathCache);
+        } else {
             if (playSubtitle != null && playSubtitle .length() > 0) {
-                // 设置字幕
                 mController.mSubtitleView.setSubtitlePath(playSubtitle);
             } else {
-                String subtitlePathCache = (String)CacheManager.getCache(MD5.string2MD5(subtitleCacheKey));
-                if (subtitlePathCache != null && !subtitlePathCache.isEmpty()) {
-                    mController.mSubtitleView.setSubtitlePath(subtitlePathCache);
+                if (mController.mSubtitleView.hasInternal) {
+                    mController.mSubtitleView.isInternal = true;
                 }
             }
         }
