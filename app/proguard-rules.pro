@@ -202,6 +202,9 @@
 # 迅雷下载模块
 -keep class com.xunlei.downloadlib.** {*;} 
 
+# 支持影视的ali相关的jar
+-keep class com.google.gson.**{*;}
+
 # magnet：解决模拟器推送 磁力链接 闪退
 -keep class com.xunlei.downloadlib.** {*;}
 

@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
     <LinearLayout
         android:layout_width="@dimen/vs_420"
-        android:layout_height="@match_parent"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="@drawable/shape_dialog_pg_search_checkbox"
         android:orientation="vertical">
