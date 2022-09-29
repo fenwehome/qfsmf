@@ -202,6 +202,9 @@
 # 迅雷下载模块
 -keep class com.xunlei.downloadlib.** {*;} 
 
+# quickjs
+-keep class com.github.tvbox.quickjs.** {*;}
+
 # 支持影视的ali相关的jar
 -keep class com.google.gson.**{*;}
 

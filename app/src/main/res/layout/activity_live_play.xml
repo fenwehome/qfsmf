@@ -7,42 +7,42 @@
     <xyz.doikki.videoplayer.player.VideoView
         android:id="@+id/mVideoView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent" />
+
+	<LinearLayout
+		android:id="@+id/tvLeftChannnelListLayout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_gravity="center_horizontal"
+		android:layout_margin="0dp"
+		android:baselineAligned="false"
+		android:orientation="horizontal"
+		android:padding="0dp">
 
 		<LinearLayout
-			android:id="@+id/tvLeftChannnelListLayout"
-			android:layout_width="match_parent"
+			android:id="@+id/ll_typeSelect"
+			aandroid:layout_width="wrap_content"
 			android:layout_height="match_parent"
-			android:layout_gravity="center_horizontal"
-			android:layout_margin="0dp"
+			android:layout_margin="20dp"
+			android:background="@drawable/bg_channel_list"
 			android:baselineAligned="false"
-			android:orientation="horizontal"
 			android:padding="0dp">
 
 			<LinearLayout
-				android:id="@+id/ll_typeSelect"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent"
-				android:layout_margin="20dp"
-				android:background="@drawable/bg_channel_list"
-				android:baselineAligned="false"
-				android:padding="0dp">
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_vertical"
+				android:orientation="horizontal">
 
-				<LinearLayout
-					android:layout_width="wrap_content"
+				<com.owen.tvrecyclerview.widget.TvRecyclerView
+					android:id="@+id/mGroupGridView"
+					android:layout_width="@dimen/vs_240"
 					android:layout_height="wrap_content"
-					android:layout_gravity="center_vertical"
-					android:orientation="horizontal">
-
-					<com.owen.tvrecyclerview.widget.TvRecyclerView
-						android:id="@+id/mGroupGridView"
-						android:layout_width="@dimen/vs_240"
-						android:layout_height="wrap_content"
-						android:divider="@null"
-						android:fadeScrollbars="false"
-						android:listSelector="@drawable/item_bg_selector_left"
-						android:padding="10dp"
-						android:scrollbars="none" />
+					android:divider="@null"
+					android:fadeScrollbars="false"
+					android:listSelector="@drawable/item_bg_selector_left"
+					android:padding="10dp"
+					android:scrollbars="none" />
 
 				</LinearLayout>
 
@@ -110,7 +110,6 @@
 					android:divider="@null"
 					android:fadeScrollbars="false"
 					android:focusable="true"
-					android:nextFocusDown="@id/divEPG"
 					android:listSelector="@drawable/item_bg_selector_right"
 					android:padding="5dp"
 					android:scrollbars="none" />
@@ -208,7 +207,6 @@
 
 			</LinearLayout>
 		</LinearLayout>
-	</xyz.doikki.videoplayer.player.VideoView>
 <!--添加EPG显示，更改样式 by 龍-->
 
 

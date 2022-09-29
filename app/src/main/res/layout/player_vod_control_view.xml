@@ -475,23 +475,23 @@
                 android:text="[ 1024 x 768 ]"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/ts_20" />
-        
-            <TextView
-                android:id="@+id/tv_sys_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/vs_20"
-                android:layout_marginRight="@dimen/vs_20"
-                android:layout_marginTop="@dimen/vs_10"
-                android:layout_gravity="right"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:padding="@dimen/vs_20"
-                android:tag="vod_control_pause_time"
-                android:text="00:00:00"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/ts_20" />
-        </LinearLayout>
+        </LinearLayout>  
+      
+        <TextView
+            android:id="@+id/tv_sys_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/vs_20"
+            android:layout_marginRight="@dimen/vs_20"
+            android:layout_marginTop="@dimen/vs_10"
+            android:layout_gravity="right"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:padding="@dimen/vs_20"
+            android:tag="vod_control_pause_time"
+            android:text="00:00:00"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/ts_20" />
 
         <LinearLayout
             android:layout_width="@dimen/vs_280"
