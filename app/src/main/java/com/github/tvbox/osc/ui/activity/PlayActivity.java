@@ -1371,7 +1371,6 @@ public class PlayActivity extends BaseActivity {
                     } else {
                         playUrl(url, null);
                     }
-                    mController.setUrlTitle("视频地址："+url);
                     stopLoadWebView(false);
                 }
             }
@@ -1385,9 +1384,9 @@ public class PlayActivity extends BaseActivity {
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
             WebResourceResponse response = checkIsVideo(url, null);
-            if (response == null)
-                return super.shouldInterceptRequest(view, url);
-            else
+//            if (response == null)
+//                return super.shouldInterceptRequest(view, url);
+//            else
                 return response;
         }
 
@@ -1415,9 +1414,9 @@ public class PlayActivity extends BaseActivity {
 
             }
             WebResourceResponse response = checkIsVideo(url, webHeaders);
-            if (response == null)
-                return super.shouldInterceptRequest(view, request);
-            else
+//            if (response == null)
+//                return super.shouldInterceptRequest(view, request);
+//            else
                 return response;
         }
 
@@ -1557,7 +1556,6 @@ public class PlayActivity extends BaseActivity {
                     } else {
                         playUrl(url, null);
                     }
-                    mController.setUrlTitle("视频地址："+url);
                     stopLoadWebView(false);
                 }
             }
