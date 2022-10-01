@@ -204,6 +204,9 @@
 
 -keep class com.github.tvbox.quickjs.** {*;} 
 
+# 支持影视的ali相关的jar
+-keep class com.google.gson.**{*;}
+
 # Pyramid
 -keep public class com.undcover.freedom.pyramid.** { *; }
 -dontwarn com.undcover.freedom.pyramid.**
