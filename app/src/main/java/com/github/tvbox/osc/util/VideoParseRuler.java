@@ -17,7 +17,6 @@ public class VideoParseRuler {
         HOSTS_RULE.put(host, rules);
     }
 
-    @Nullable
     public static ArrayList<ArrayList<String>> getHostRules(String host) {
         if (HOSTS_RULE.containsKey(host)) {
             return HOSTS_RULE.get(host);
