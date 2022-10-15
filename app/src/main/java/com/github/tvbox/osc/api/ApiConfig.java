@@ -133,7 +133,7 @@ public class ApiConfig {
         if (apiUrl.contains(pk)) {
             String[] a = apiUrl.split(pk);
             TempKey = a[1];
-            iif (apiUrl.startsWith("clan")){
+            if (apiUrl.startsWith("clan")){
                 configUrl = clanToAddress(a[0]);
             }else if (apiUrl.startsWith("http")){
                 configUrl = a[0];
