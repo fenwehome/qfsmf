@@ -63,6 +63,9 @@ public class App extends MultiDexApplication {
             Hawk.put(HawkConfig.PLAY_TYPE, 1);
         }
         //自定义默认配置，硬解，安全dns，缩略图
+        if (!Hawk.contains(HawkConfig.HOME_REC,)) {
+            Hawk.put(HawkConfig.HOME_REC, 1);
+        }
         if (!Hawk.contains(HawkConfig.IJK_CODEC)) {
             Hawk.put(HawkConfig.IJK_CODEC, "硬解码");
         }
@@ -70,7 +73,7 @@ public class App extends MultiDexApplication {
             Hawk.put(HawkConfig.DOH_URL, 0);
         }
         if (!Hawk.contains(HawkConfig.SEARCH_VIEW)) {
-            Hawk.put(HawkConfig.SEARCH_VIEW, 0);
+            Hawk.put(HawkConfig.SEARCH_VIEW, 1);
         }
     }
 
