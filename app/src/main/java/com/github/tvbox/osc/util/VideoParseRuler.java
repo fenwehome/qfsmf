@@ -48,7 +48,9 @@ public class VideoParseRuler {
         ArrayList<ArrayList<String>> hostRules = getHostRules(host);
         if (hostRules != null && hostRules.size() > 0) {
             boolean isVideoRuleCheck = false;
-            if (hostRules.get(i) != null && hostRules.get(i).size() > 0) {
+            for(int i=0; i<hostRules.size(); i++) {
+                boolean checkIsVideo = true;
+                if (hostRules.get(i) != null && hostRules.get(i).size() > 0) {
                     for(int j=0; j<hostRules.get(i).size(); j++) {
                         Pattern onePattern = Pattern.compile("" + hostRules.get(i).get(j));
                         if (!onePattern.matcher(url).find()) {
