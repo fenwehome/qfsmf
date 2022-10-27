@@ -1482,7 +1482,7 @@ public class PlayActivity extends BaseActivity {
 
         @Nullable
         @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, String url) 
+        public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
             return checkIsVideo(url, null);
         }
 
