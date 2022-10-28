@@ -71,7 +71,7 @@ public class App extends MultiDexApplication {
             Hawk.put(HawkConfig.DOH_URL, 0);
         }
         if (!Hawk.contains(HawkConfig.SEARCH_VIEW)) {
-            Hawk.put(HawkConfig.SEARCH_VIEW, 1);
+            Hawk.put(HawkConfig.SEARCH_VIEW, 0);
         }
     }
 
