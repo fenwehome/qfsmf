@@ -119,6 +119,7 @@ public class VodController extends BaseController {
     TextView mPlayerBtn;
     TextView mPlayerIJKBtn;
     TextView mPlayerRetry;
+    TextView mPlayrefresh;
     public TextView mPlayerTimeStartEndText;
     public TextView mPlayerTimeStartBtn;
     public TextView mPlayerTimeSkipBtn;
@@ -133,8 +134,8 @@ public class VodController extends BaseController {
 
     Handler myHandle;
     Runnable myRunnable;
-    int myHandleSeconds = 5000;//闲置多少毫秒秒关闭底栏  默认5秒
-    
+    int myHandleSeconds = 6000;//闲置多少毫秒秒关闭底栏  默认6秒
+
     int videoPlayState = 0;
 
     private Runnable myRunnable2 = new Runnable() {
@@ -152,7 +153,7 @@ public class VodController extends BaseController {
             int getCurrentPosition = (int) (mControlWrapper.getCurrentPosition() / 1000.0);
             int getDuration = (int) (mControlWrapper.getDuration() / 1000.0);
             seekTime.setText(String.format("%02d", getCurrentPosition / 60) + ":" + String.format("%02d", getCurrentPosition % 60) + " | " + String.format("%02d", getDuration / 60) + ":" + String.format("%02d", getDuration % 60));
-            
+
             mHandler.postDelayed(this, 1000);
         }
     };
@@ -160,7 +161,7 @@ public class VodController extends BaseController {
 
 
 
-    
+
     @Override
     protected void initView() {
         super.initView();
@@ -179,6 +180,7 @@ public class VodController extends BaseController {
         mParseRoot = findViewById(R.id.parse_root);
         mGridView = findViewById(R.id.mGridView);
         mPlayerRetry = findViewById(R.id.play_retry);
+        mPlayrefresh = findViewById(R.id.play_refresh);
         mNextBtn = findViewById(R.id.play_next);
         mPreBtn = findViewById(R.id.play_pre);
         mPlayerScaleBtn = findViewById(R.id.play_scale);
@@ -208,7 +210,7 @@ public class VodController extends BaseController {
                 hideBottom();
             }
         };
-        
+
         mPlayPauseTime.post(new Runnable() {
             @Override
             public void run() {
@@ -272,6 +274,13 @@ public class VodController extends BaseController {
             @Override
             public void onClick(View v) {
                 listener.replay(true);
+                hideBottom();
+            }
+        });
+        mPlayrefresh.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener.replay(false);
                 hideBottom();
             }
         });
@@ -344,11 +353,10 @@ public class VodController extends BaseController {
                 return true;
             }
         });
-
         mPlayerBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-//               myHandle.removeCallbacks(myRunnable);
+//                myHandle.removeCallbacks(myRunnable);
 //                myHandle.postDelayed(myRunnable, myHandleSeconds);
                 try {
                     int playerType = mPlayerConfig.getInt("pl");
@@ -441,8 +449,8 @@ public class VodController extends BaseController {
         mPlayerIJKBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-               myHandle.removeCallbacks(myRunnable);
-               myHandle.postDelayed(myRunnable, myHandleSeconds);
+//                myHandle.removeCallbacks(myRunnable);
+//                myHandle.postDelayed(myRunnable, myHandleSeconds);
                 try {
                     String ijk = mPlayerConfig.getString("ijk");
                     List<IJKCode> codecs = ApiConfig.get().getIjkCodes();
@@ -545,7 +553,6 @@ public class VodController extends BaseController {
                 }
             }
         });
-        // takagen99: Add long press to reset counter
         mPlayerTimeSkipBtn.setOnLongClickListener(new OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
@@ -563,13 +570,13 @@ public class VodController extends BaseController {
 //            @Override
 //            public void onClick(View view) {
 //                myHandle.removeCallbacks(myRunnable);
- //               myHandle.postDelayed(myRunnable, myHandleSeconds);
+//                myHandle.postDelayed(myRunnable, myHandleSeconds);
 //                int step = Hawk.get(HawkConfig.PLAY_TIME_STEP, 5);
 //                step += 5;
 //                if (step > 30) {
 //                    step = 5;
 //                }
- //               Hawk.put(HawkConfig.PLAY_TIME_STEP, step);
+//                Hawk.put(HawkConfig.PLAY_TIME_STEP, step);
 //                updatePlayerCfgView();
 //            }
 //        });
@@ -714,7 +721,7 @@ public class VodController extends BaseController {
 
     @Override
     protected void setProgress(int duration, int position) {
-        
+
         if (mIsDragging) {
             return;
         }
@@ -853,13 +860,13 @@ public class VodController extends BaseController {
         if (super.onKeyEvent(event)) {
             return true;
         }
+        int keyCode = event.getKeyCode();
+        int action = event.getAction();
         if (isBottomVisible()) {
             myHandle.postDelayed(myRunnable, myHandleSeconds);
             return super.dispatchKeyEvent(event);
         }
         boolean isInPlayback = isInPlaybackState();
-        int keyCode = event.getKeyCode();
-        int action = event.getAction();
         if (action == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 if (isInPlayback) {
@@ -871,8 +878,8 @@ public class VodController extends BaseController {
                     togglePlay();
                     return true;
                 }
-//            } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {  // 闲置开启计时关闭透明底栏
-            } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+//            } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {  return true;// 闲置开启计时关闭透明底栏
+            } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode== KeyEvent.KEYCODE_MENU) {
                 if (!isBottomVisible()) {
                     showBottom();
                     myHandle.postDelayed(myRunnable, myHandleSeconds);
