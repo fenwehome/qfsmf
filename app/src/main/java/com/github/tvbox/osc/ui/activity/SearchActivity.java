@@ -139,16 +139,16 @@ public class SearchActivity extends BaseActivity {
             pauseRunnable.clear();
             pauseRunnable = null;
         }
-    }
-    if (hasKeyBoard) {
+        if (hasKeyBoard) {
             tvSearch.requestFocus();
             tvSearch.requestFocusFromTouch();
         }else {
             etSearch.requestFocus();
             etSearch.requestFocusFromTouch();
         }
+    }
 
-    private void initView() {
+        private void initView() {
         EventBus.getDefault().register(this);
         llLayout = findViewById(R.id.llLayout);
         etSearch = findViewById(R.id.etSearch);
