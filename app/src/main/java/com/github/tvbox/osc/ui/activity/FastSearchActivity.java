@@ -44,6 +44,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -193,7 +194,8 @@ public class FastSearchActivity extends BaseActivity {
                     try {
                         if (searchExecutorService != null) {
                             pauseRunnable = searchExecutorService.shutdownNow();
-                            JSEngine.getInstance().stopAll();                            searchExecutorService = null;
+                            JSEngine.getInstance().stopAll();
+                            searchExecutorService = null;
                         }
                     } catch (Throwable th) {
                         th.printStackTrace();
@@ -219,7 +221,8 @@ public class FastSearchActivity extends BaseActivity {
                     try {
                         if (searchExecutorService != null) {
                             pauseRunnable = searchExecutorService.shutdownNow();
-                            JSEngine.getInstance().stopAll();                            searchExecutorService = null;
+                            JSEngine.getInstance().stopAll();
+                            searchExecutorService = null;
                         }
                     } catch (Throwable th) {
                         th.printStackTrace();
@@ -252,6 +255,7 @@ public class FastSearchActivity extends BaseActivity {
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
     }
+
     private void filterResult(String spName) {
         if (spName == "全部显示") {
             mGridView.setVisibility(View.VISIBLE);
@@ -296,8 +300,9 @@ public class FastSearchActivity extends BaseActivity {
                         } catch (Throwable th) {
                             th.printStackTrace();
                         }
-                        quickSearchWord.add(searchTitle);
-                        EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_QUICK_SEARCH_WORD, quickSearchWord));
+                        quickSearchWord.addAll(SearchHelper.splitWords(searchTitle));
+                        List<String> words = new ArrayList<>(new HashSet<>(quickSearchWord));
+                        EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_QUICK_SEARCH_WORD, words));
                     }
 
                     @Override
@@ -325,7 +330,7 @@ public class FastSearchActivity extends BaseActivity {
             search(title);
         }
     }
- 
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refresh(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_SEARCH_RESULT) {
@@ -402,6 +407,9 @@ public class FastSearchActivity extends BaseActivity {
             if (!bean.isSearchable()) {
                 continue;
             }
+            if (mCheckSources != null && !mCheckSources.containsKey(bean.getKey())) {
+                continue;
+            }
             siteKey.add(bean.getKey());
             this.spNames.put(bean.getName(), bean.getKey());
             allRunCount.incrementAndGet();
@@ -413,18 +421,19 @@ public class FastSearchActivity extends BaseActivity {
                 public void run() {
                     try {
                         sourceViewModel.getSearch(key, searchTitle);
-                    } catch (Exception e){
+                    } catch (Exception e) {
 
                     }
                 }
             });
         }
     }
+
     // 向过滤栏添加有结果的spname
     private String addWordAdapterIfNeed(String key) {
         try {
             String name = "";
-            for (String n : spNames.keySet() ) {
+            for (String n : spNames.keySet()) {
                 if (spNames.get(n) == key) {
                     name = n;
                 }
