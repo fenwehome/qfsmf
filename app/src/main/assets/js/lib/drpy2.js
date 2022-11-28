@@ -1,34 +1,12 @@
-// import 'https://gitcode.net/qq_32394351/dr_py/-/raw/master/libs/es6py.js';
-// import {是否正版,urlDeal,setResult,setResult2,setHomeResult,maoss,urlencode} from 'http://192.168.10.103:5705/libs/es6py.js';
-// import 'http://192.168.1.124:5705/libs/es6py.js';
 import cheerio from 'https://gitcode.net/qq_32394351/dr_py/-/raw/master/libs/cheerio.min.js';
-// import cheerio from 'http://192.168.10.103:5705/libs/cheerio.min.js';
 import 'https://gitcode.net/qq_32394351/dr_py/-/raw/master/libs/crypto-js.js';
-import 'https://gitcode.net/qq_32394351/dr_py/-/raw/master/libs/drT.js';
-// import 'http://192.168.10.103:5705/libs/drT.js';
-// import muban from 'https://gitcode.net/qq_32394351/dr_py/-/raw/master/js/模板.js';
-// import muban from 'http://192.168.10.103:5705/admin/view/模板.js';
 
-// const key = 'drpy_zbk';
-// eval(req('http://192.168.1.124:5705/libs/es6py.js').content);
 function init_test(){
     // console.log(typeof(CryptoJS));
     console.log("init_test_start");
     console.log("当前版本号:"+VERSION);
     console.log(RKEY);
     console.log(JSON.stringify(rule));
-    // console.log('123456的md5值是:'+md5('123456'));
-    // let aa = base64Encode('编码测试一下')
-    // log(aa);
-    // let bb = base64Decode(aa);
-    // log('bb:'+bb);
-    // clearItem(RULE_CK);
-    // console.log(JSON.stringify(rule));
-    // console.log(request('https://www.baidu.com',{withHeaders:true}));
-    // console.log(request('https://www.baidu.com/favicon.ico',{toBase64:true}));
-    // require('http://192.168.10.99:5705/txt/pluto/drT.js');
-    // console.log(typeof(drT));
-    // console.log(drT.renderText('{{fl.cate}},hi, {{fl}}哈哈.{{fl}}',{sort: 1,cate:'movie'},'fl'));
     console.log("init_test_end");
 }
 
@@ -53,7 +31,7 @@ function pre(){
 }
 
 let rule = {};
-const VERSION = 'drpy1 3.9.25beta1 20221126';
+const VERSION = 'drpy2 3.9.25beta1 20221126';
 /** 已知问题记录
  * 1.影魔的jinjia2引擎不支持 {{fl}}对象直接渲染 (有能力解决的话尽量解决下，支持对象直接渲染字符串转义,如果加了|safe就不转义)[影魔牛逼，最新的文件发现这问题已经解决了]
  * Array.prototype.append = Array.prototype.push; 这种js执行后有毛病,for in 循环列表会把属性给打印出来 (这个大毛病需要重点排除一下)
@@ -107,11 +85,13 @@ var _pdfa;
 var _pd;
 // const DOM_CHECK_ATTR = ['url', 'src', 'href', 'data-original', 'data-src'];
 const DOM_CHECK_ATTR = /(url|src|href|-original|-src|-play|-url)$/;
+const NOADD_INDEX = /:eq|:lt|:gt|:first|:last|^body$|^#/;  // 不自动加eq下标索引
+const URLJOIN_ATTR = /(url|src|href|-original|-src|-play|-url)$/;  // 需要自动urljoin的属性
 const SELECT_REGEX = /:eq|:lt|:gt|#/g;
 const SELECT_REGEX_A = /:eq|:lt|:gt/g;
 
 /**
-es6py扩展
+ es6py扩展
  */
 if (typeof Object.assign != 'function') {
     Object.assign = function () {
@@ -438,7 +418,6 @@ function forceOrder(lists,key,option){
     return lists
 }
 
-
 let VODS = [];// 一级或者搜索需要的数据列表
 let VOD = {};// 二级的单个数据
 let TABS = [];// 二级的自定义线路列表 如: TABS=['道长在线','道长在线2']
@@ -486,20 +465,7 @@ var urljoin2 = urljoin;
 const defaultParser = {
     pdfh:pdfh,
     pdfa:pdfa,
-    pd(html,parse,uri){
-        let ret = this.pdfh(html,parse);
-        if(typeof(uri)==='undefined'||!uri){
-            uri = '';
-        }
-        if(DOM_CHECK_ATTR.test(parse)){
-            if(/http/.test(ret)){
-                ret = ret.substr(ret.indexOf('http'));
-            }else{
-                ret = urljoin(MY_URL,ret)
-            }
-        }
-        return ret
-    },
+    pd:pd,
 };
 
 
@@ -633,106 +599,32 @@ const parseTags = {
         },
     },
     jq:{
-        pdfh(html, parse, base_url) {
-            if (!parse || !parse.trim()) {
+        pdfh(html, parse) {
+            if (!html||!parse || !parse.trim()) {
                 return ''
             }
-            let eleFind = typeof html === 'object';
-            let option = undefined;
-            if (eleFind && parse.startsWith('body&&')) {
-                parse = parse.substr(6);
-                if (parse.indexOf('&&') < 0) {
-                    option = parse.trim();
-                    parse = '*=*';
-                }
-            }
-            if (parse.indexOf('&&') > -1) {
-                let sp = parse.split('&&');
-                option = sp[sp.length - 1];
-                sp.splice(sp.length - 1);
-                if (sp.length > 1) {
-                    for (let i in sp) {
-                        //Javascript自定义Array.prototype干扰for-in循环
-                        if(sp.hasOwnProperty(i)){
-                            if (!SELECT_REGEX.test(sp[i])) {
-                                sp[i] = sp[i] + ':eq(0)';
-                            }
-                        }
-                    }
-                } else {
-                    if (!SELECT_REGEX.test(sp[0])) {
-                        sp[0] = sp[0] + ':eq(0)';
-                    }
-                }
-                parse = sp.join(' ');
-            }
-            let result = '';
-            const $ = eleFind ? html.rr : cheerio.load(html);
-            let ret = eleFind ? ((parse === '*=*' || $(html.ele).is(parse)) ? html.ele : $(html.ele).find(parse)) : $(parse);
-            if (option) {
-                if (option === 'Text') {
-                    result = $(ret).text();
-                }
-                else if (option === 'Html') {
-                    result = $(ret).html();
-                }
-                else {
-                    result = $(ret).attr(option);
-                    if(/style/.test(option.toLowerCase())&&/url\(/.test(result)){
-                        try {
-                            result =  result.match(/url\((.*?)\)/)[1];
-                        }catch (e) {}
-                    }
-                }
-                if (result && base_url && DOM_CHECK_ATTR.test(option)) {
-                    if (/http/.test(result)) {
-                        result = result.substr(result.indexOf('http'));
-                    } else {
-                        result = urljoin(base_url, result)
-                    }
-                }
-            } else {
-                result = $(ret).toString();
-            }
+            parse = parse.trim();
+            let result = defaultParser.pdfh(html,parse);
+            // print(`pdfh解析${parse}=>${result}`);
             return result;
         },
         pdfa(html, parse) {
-            if (!parse || !parse.trim()) {
-                print('!parse');
+            if (!html||!parse || !parse.trim()) {
                 return [];
             }
-            let eleFind = typeof html === 'object';
-            // print('parse前:'+parse);
-            if (parse.indexOf('&&') > -1) {
-                let sp = parse.split('&&');
-                for (let i in sp) {
-                    if(sp.hasOwnProperty(i)){
-                        if (!SELECT_REGEX_A.test(sp[i]) && i < sp.length - 1) {
-                            if(sp[i]!=='body'){
-                                // sp[i] = sp[i] + ':eq(0)';
-                                sp[i] = sp[i] + ':first';
-                            }
-                        }
-                    }
-                }
-                parse = sp.join(' ');
-            }
-            // print('parse后:'+parse);
-            const $ = eleFind ? html.rr : cheerio.load(html);
-            let ret = eleFind ? ($(html.ele).is(parse) ? html.ele : $(html.ele).find(parse)) : $(parse);
-            let result = [];
-            // print('outerHTML:');
-            // print($(ret[0]).prop("outerHTML"));
-            if (ret) {
-                ret.each(function (idx, ele) {
-                    result.push({ rr: $, ele: ele });
-                    // result.push({ rr: $, ele: $(ele).prop("outerHTML")}); // 性能贼差
-                });
-            }
+            parse = parse.trim();
+            let result = defaultParser.pdfa(html,parse);
+            // print(result);
+            print(`pdfa解析${parse}=>${result.length}`);
             return result;
         },
-        pd(html,parse,uri){
-            return parseTags.jq.pdfh(html, parse, MY_URL);
+        pd(html,parse,base_url){
+            if (!html||!parse || !parse.trim()) {
+                return ''
+            }
+            parse = parse.trim();
+            base_url = base_url||MY_URL;
+            return defaultParser.pd(html, parse, base_url);
         },
     },
     getParse(p0){//非js开头的情况自动获取解析标签
@@ -1289,7 +1181,7 @@ function homeVodParse(homeVodObj){
                             // print(vod);
                             d.push(vod);
                         } catch (e) {
-                            console.log('首页列表处理发生错误:'+e.message);
+                            console.log('首页列表双层定位处理发生错误:'+e.message);
                         }
 
                     }
@@ -1305,6 +1197,7 @@ function homeVodParse(homeVodObj){
                 let p3 = getPP(p,3,pp,3);
                 let p4 = getPP(p,4,pp,4);
                 let p5 = getPP(p,5,pp,5);
+
                 for (let item of items) {
                     try {
                         let title = _pdfh(item, p1);
@@ -1341,7 +1234,7 @@ function homeVodParse(homeVodObj){
                         d.push(vod);
 
                     } catch (e) {
-
+                        console.log('首页列表单层定位处理发生错误:'+e.message);
                     }
 
                 }
@@ -1413,9 +1306,6 @@ function categoryParse(cateObj) {
         let new_url;
         new_url = cheerio.jinja2(url,{fl:fl});
         // console.log('jinjia2执行后的new_url类型为:'+typeof(new_url));
-        if(/object Object/.test(new_url)){
-            new_url = drT.renderText(url,fl);
-        }
         url = new_url;
     }
     if(/fypage/.test(url)){
@@ -1723,7 +1613,6 @@ function detailParse(detailObj){
             html = getHtml(MY_URL);
         }
         print(`二级${MY_URL}仅获取源码耗时:${(new Date()).getTime()-tt1}毫秒`);
-        let _impJQP = false;
         let _ps;
         if(p.is_json){
             print('二级是json');
@@ -1740,16 +1629,6 @@ function detailParse(detailObj){
             _ps = parseTags.jq;
             // print('二级默认jsp');
             // _ps = parseTags.jsp;
-        }
-        if(_ps === parseTags.jq){ // jquery解析提前load(html)
-            _impJQP = true;
-        }
-        if (_impJQP) {
-            let ttt1 = (new Date()).getTime();
-            let c$ = cheerio.load(html);
-            // print(`二级${MY_URL}仅c$源码耗时:${(new Date()).getTime()-ttt1}毫秒`);
-            html = { rr: c$, ele: c$('html')[0] };
-            print(`二级${MY_URL}仅cheerio.load源码耗时:${(new Date()).getTime()-ttt1}毫秒`);
         }
         let tt2 = (new Date()).getTime();
         print(`二级${MY_URL}获取并装载源码耗时:${tt2-tt1}毫秒`);
@@ -1796,21 +1675,12 @@ function detailParse(detailObj){
         if(p.重定向&&p.重定向.startsWith('js:')){
             print('开始执行重定向代码:'+p.重定向);
             html = eval(p.重定向.replace('js:',''));
-            if (_impJQP) {
-                let c$ = cheerio.load(html);
-                html = { rr: c$, ele: c$('html')[0] }
-            }
         }
-        
+
 // console.log(2);
         if(p.tabs){
             if(p.tabs.startsWith('js:')){
                 print('开始执行tabs代码:'+p.tabs);
-                if(html&&_impJQP&&typeof (html)!=='string'){
-                    try { // 假装是jq的对象拿来转换一下字符串,try为了防止json的情况报错
-                        html = html.rr(html.ele).toString();
-                    }catch (e) {}
-                }
                 var input = MY_URL;
                 eval(p.tabs.replace('js:',''));
                 playFrom = TABS;
@@ -1852,12 +1722,6 @@ function detailParse(detailObj){
             if(p.lists.startsWith('js:')){
                 print('开始执行lists代码:'+p.lists);
                 try {
-                    if(html&&_impJQP&&typeof (html)!=='string'){
-                        // 假装是jq的对象拿来转换一下字符串,try为了防止json的情况报错
-                        try {
-                            html = html.rr(html.ele).toString();
-                        }catch (e) {}
-                    }
                     var input = MY_URL;
                     var play_url = '';
                     eval(p.lists.replace('js:',''));
@@ -1921,6 +1785,7 @@ function detailParse(detailObj){
                         new_vod_list = forceOrder(new_vod_list,'',x=>x.split('$')[0]);
                         console.log(`drpy影响性能代码共计列表数循环次数:${vodList.length},耗时:${(new Date()).getTime()-tt1}毫秒`);
                     }
+                    // print(new_vod_list);
                     let vlist = new_vod_list.join('#');
                     vod_tab_list.push(vlist);
                 }
@@ -2033,7 +1898,7 @@ function playParse(playObj){
  * js源预处理特定返回对象中的函数
  * @param ext
  */
- function init(ext) {
+function init(ext) {
     console.log('init');
     try {
         // make shared jsContext happy muban不能import,不然会造成换源继承后变量被篡改
