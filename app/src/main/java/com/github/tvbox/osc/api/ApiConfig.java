@@ -7,7 +7,6 @@ import android.util.Base64;
 
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.Spider;
-import com.github.catvod.crawler.SpiderNull;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
 import com.github.tvbox.osc.bean.IJKCode;
@@ -571,6 +570,8 @@ public class ApiConfig {
     }
 
     public Spider getCSP(SourceBean sourceBean) {
+        boolean js = sourceBean.getApi().startsWith("js_") || sourceBean.getApi().endsWith(".js") || sourceBean.getApi().contains(".js?");
+        if (js) return JSEngine.getInstance().getSpider(sourceBean);
         //pyramid
         if (sourceBean.getApi().startsWith("py_")) {
             try {
@@ -580,8 +581,6 @@ public class ApiConfig {
                 return new SpiderNull();
             }
         }
-        boolean js = sourceBean.getApi().startsWith("js_") || sourceBean.getApi().endsWith(".js") || sourceBean.getApi().contains(".js?");
-        if (js) return JSEngine.getInstance().getSpider(sourceBean);
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 

@@ -485,9 +485,12 @@ public class SourceViewModel extends ViewModel {
                 String search = sp.searchContent(wd, false);
                 if(!TextUtils.isEmpty(search)){
                     json(searchResult, search, sourceBean.getKey());
+                } else {
+                    json(searchResult, "", sourceBean.getKey());
                 }
             } catch (Throwable th) {
                 th.printStackTrace();
+                json(searchResult, "", sourceBean.getKey());
             }
         } else if (type == 0 || type == 1) {
             OkGo.<String>get(sourceBean.getApi())
@@ -648,6 +651,7 @@ public class SourceViewModel extends ViewModel {
                         JSONObject result = new JSONObject(json);
                         result.put("key", url);
                         result.put("proKey", progressKey);
+                        result.put("subtKey", subtitleKey);
                         if (!result.has("flag"))
                             result.put("flag", playFlag);
                         playResult.postValue(result);
@@ -811,7 +815,7 @@ public class SourceViewModel extends ViewModel {
 //                            }
 //                        }
                         for (String s : str) {
-                                String[] ss = s.split("\\$");
+                            String[] ss = s.split("\\$");
                             if (ss.length > 0) {
                                 if (ss.length >= 2) {
                                     infoBeanList.add(new Movie.Video.UrlBean.UrlInfo.InfoBean(ss[0], ss[1]));
@@ -903,7 +907,7 @@ public class SourceViewModel extends ViewModel {
             } else if (quickSearchResult == result) {
                 EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_QUICK_SEARCH_RESULT, data));
             } else if (result != null) {
-                 if (result == detailResult) {
+                if (result == detailResult) {
                     checkThunder(data);
                 } else {
                     result.postValue(data);
