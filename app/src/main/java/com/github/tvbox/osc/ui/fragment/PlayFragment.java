@@ -49,6 +49,7 @@ import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.bean.Subtitle;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.cache.CacheManager;
+import com.github.tvbox.osc.danmu.BiliDanmukuParser;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.IjkMediaPlayer;
 import com.github.tvbox.osc.player.MyVideoView;
@@ -68,6 +69,8 @@ import com.github.tvbox.osc.util.PlayerHelper;
 import com.github.tvbox.osc.util.VideoParseRuler;
 import com.github.tvbox.osc.util.XWalkUtils;
 import com.github.tvbox.osc.util.thunder.Thunder;
+import com.github.tvbox.osc.util.urlhttp.CallBackUtil;
+import com.github.tvbox.osc.util.urlhttp.UrlHttpUtil;
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
@@ -92,6 +95,7 @@ import org.xwalk.core.XWalkWebResourceResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -102,7 +106,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
+import master.flame.danmaku.controller.DrawHandler;
+import master.flame.danmaku.controller.IDanmakuView;
+import master.flame.danmaku.danmaku.loader.ILoader;
+import master.flame.danmaku.danmaku.loader.IllegalDataException;
+import master.flame.danmaku.danmaku.loader.android.DanmakuLoaderFactory;
+import master.flame.danmaku.danmaku.model.BaseDanmaku;
+import master.flame.danmaku.danmaku.model.DanmakuTimer;
+import master.flame.danmaku.danmaku.model.android.DanmakuContext;
+import master.flame.danmaku.danmaku.model.android.Danmakus;
+import master.flame.danmaku.danmaku.parser.BaseDanmakuParser;
+import master.flame.danmaku.danmaku.parser.IDataSource;
 import me.jessyan.autosize.AutoSize;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkTimedText;
@@ -117,8 +134,17 @@ public class PlayFragment extends BaseLazyFragment {
     private VodController mController;
     private SourceViewModel sourceViewModel;
     private Handler mHandler;
+    private boolean showDanmaku;
 
+    private IDanmakuView danmakuView;
+
+    private DanmakuContext danmakuContext;
     private long videoDuration = -1;
+
+    @Override
+    protected int getLayoutResID() {
+        return R.layout.activity_play;
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refresh(RefreshEvent event) {
@@ -128,19 +154,41 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     @Override
-    protected int getLayoutResID() {
-        return R.layout.activity_play;
-    }
-
-    @Override
     protected void init() {
         initView();
         initViewModel();
         initData();
     }
 
+
+    /**
+     * 创建解析器，解析输入流
+     */
+    private BaseDanmakuParser createParser(InputStream stream) {
+        if (stream == null) {
+            return new BaseDanmakuParser() {
+                @Override
+                protected Danmakus parse() {
+                    return new Danmakus();
+                }
+            };
+        }
+        //A站是Json格式
+        ILoader loader = DanmakuLoaderFactory.create(DanmakuLoaderFactory.TAG_BILI);
+        try {
+            loader.load(stream);
+        } catch (IllegalDataException e) {
+            e.printStackTrace();
+        }
+        BaseDanmakuParser parser = new BiliDanmukuParser();
+        IDataSource<?> dataSource = loader.getDataSource();
+        parser.load(dataSource);
+        return parser;
+
+    }
+
     private void initView() {
-    	EventBus.getDefault().register(this);
+        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -223,7 +271,7 @@ public class PlayFragment extends BaseLazyFragment {
             public void errReplay() {
                 errorWithRetry("视频播放出错", false);
             }
-            
+
             @Override
             public void selectSubtitle() {
                 try {
@@ -239,12 +287,73 @@ public class PlayFragment extends BaseLazyFragment {
             }
 
             @Override
+            public void toggleDanmu() {
+                if(danmakuView != null && danmakuView.isPrepared() && danmakuView.isShown()) {
+                    danmakuView.hide();
+                }else if(danmakuView != null && danmakuView.isPrepared() && !danmakuView.isShown()) {
+                    danmakuView.show();
+                }
+
+            }
+
+            @Override
             public void prepared() {
                 initSubtitleView();
                 initVideoDurationSomeThing();
             }
         });
         mVideoView.setVideoController(mController);
+        //设置最大显示行数
+        HashMap<Integer, Integer> maxLInesPair = new HashMap<>(16);
+        maxLInesPair.put(BaseDanmaku.TYPE_SCROLL_RL, 8);
+        //设置是否禁止重叠
+        HashMap<Integer, Boolean> overlappingEnablePair = new HashMap<>(16);
+        overlappingEnablePair.put(BaseDanmaku.TYPE_SCROLL_RL, true);
+        overlappingEnablePair.put(BaseDanmaku.TYPE_FIX_TOP, true);
+        String danmuSizeConfig = Hawk.get(HawkConfig.DANMU_SIZE,"标准");
+        Float danmuSize = 1.2f;
+        if("大".equalsIgnoreCase(danmuSizeConfig)){
+            danmuSize = 1.8f;
+        }else if("超大".equalsIgnoreCase(danmuSizeConfig)){
+            danmuSize = 2.5f;
+        }
+        danmakuContext = DanmakuContext.create();
+        danmakuContext.setDuplicateMergingEnabled(false)
+                .setScrollSpeedFactor(1.2f)
+                //设置文字的比例
+                .setScaleTextSize(danmuSize)
+                //设置显示最大行数
+                .setMaximumLines(maxLInesPair)
+                //设置防，null代表可以重叠
+                .preventOverlapping(overlappingEnablePair);
+    }
+    void initDanmuView(){
+        danmakuView = (IDanmakuView) findViewById(R.id.danmakuView);
+        danmakuView.enableDanmakuDrawingCache(true);
+        danmakuView.setCallback(new DrawHandler.Callback() {
+            @Override
+            public void prepared() {
+                showDanmaku = true;
+                danmakuView.start();
+            }
+
+            @Override
+            public void updateTimer(DanmakuTimer timer) {
+                if (Math.abs(mVideoView.getSpeed()) - 1.0 > 1e-6) {
+                    timer.add((long) (timer.lastInterval() * (mVideoView.getSpeed() - 1)));
+                }
+            }
+
+            @Override
+            public void danmakuShown(BaseDanmaku danmaku) {
+            }
+
+            @Override
+            public void drawingFinished() {
+
+            }
+        });
+        mVideoView.setDanmuView(danmakuView);
     }
 
     void initVideoDurationSomeThing() {
@@ -273,7 +382,7 @@ public class PlayFragment extends BaseLazyFragment {
             mController.mSubtitleView.setVisibility(View.VISIBLE);
         }
     }
-    
+
     void selectMySubtitle() throws Exception {
         SubtitleDialog subtitleDialog = new SubtitleDialog(getActivity());
         int playerType = mVodPlayerCfg.getInt("pl");
@@ -516,8 +625,8 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void playUrl(String url, HashMap<String, String> headers) {
-    	LOG.i("playUrl:" + url);
-    	if(autoRetryCount>0 && url.contains(".m3u8")){
+        LOG.i("playUrl:" + url);
+        if(autoRetryCount>0 && url.contains(".m3u8")){
             url="http://home.jundie.top:666/unBom.php?m3u8="+url;
         }
         String finalUrl = url;
@@ -528,7 +637,7 @@ public class PlayFragment extends BaseLazyFragment {
                 stopParse();
                 if (mVideoView != null) {
                     mVideoView.release();
-                    
+
                     if (finalUrl != null) {
                         try {
                             int playerType = mVodPlayerCfg.getInt("pl");
@@ -554,6 +663,21 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                         mVideoView.start();
                         mController.resetSpeed();
+                        if ("bilidanmu".equalsIgnoreCase(mVodInfo.area)) {
+                            initDanmuView();
+                            String u = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex).url;
+                            String cid = u.split("_")[1];
+                            UrlHttpUtil.get("https://comment.bilibili.com/" + cid + ".xml", new CallBackUtil.CallBackStream() {
+                                @Override
+                                public void onFailure(int code, String errorMessage) {
+                                }
+
+                                @Override
+                                public void onResponse(InputStream response) {
+                                    danmakuView.prepare(createParser(new InflaterInputStream(response, new Inflater(true))), danmakuContext);
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -634,7 +758,7 @@ public class PlayFragment extends BaseLazyFragment {
                                     if (headers == null) {
                                         headers = new HashMap<>();
                                     }
-                                    headers.put(key, hds.getString(key)); 
+                                    headers.put(key, hds.getString(key));
                                     if (key.equalsIgnoreCase("user-agent")) {
                                         webUserAgent = hds.getString(key).trim();
                                     }
@@ -653,7 +777,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                     } catch (Throwable th) {
 //                        errorWithRetry("获取播放信息错误", true);
-//                        Toast.makeText(mContext, "获取播放信息错误", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(mContext, "获取播放信息错误1", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     errorWithRetry("获取播放信息错误", true);
@@ -740,6 +864,9 @@ public class PlayFragment extends BaseLazyFragment {
         if (mVideoView != null) {
             mVideoView.pause();
         }
+        if(danmakuView != null){
+            danmakuView.pause();
+        }
     }
 
     @Override
@@ -747,6 +874,9 @@ public class PlayFragment extends BaseLazyFragment {
         super.onResume();
         if (mVideoView != null) {
             mVideoView.resume();
+        }
+        if (danmakuView != null){
+            danmakuView.resume();
         }
     }
 
@@ -756,9 +886,15 @@ public class PlayFragment extends BaseLazyFragment {
             if (mVideoView != null) {
                 mVideoView.pause();
             }
+            if(danmakuView != null){
+                danmakuView.pause();
+            }
         } else {
             if (mVideoView != null) {
                 mVideoView.resume();
+            }
+            if(danmakuView != null){
+                danmakuView.resume();
             }
         }
         super.onHiddenChanged(hidden);
@@ -770,6 +906,10 @@ public class PlayFragment extends BaseLazyFragment {
         if (mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
+        }
+        if(danmakuView != null){
+            danmakuView.release();
+            danmakuView = null;
         }
         stopLoadWebView(true);
         stopParse();
@@ -820,7 +960,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
         if (autoRetryCount < 2) {
             autoRetryCount++;
-			play(false);
+            play(false);
             return true;
         } else {
             autoRetryCount = 0;
@@ -841,7 +981,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     public void play(boolean reset) {
-    	if(mVodInfo==null)return;
+        if(mVodInfo==null)return;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -931,7 +1071,7 @@ public class PlayFragment extends BaseLazyFragment {
             url = jsonPlayData.getString("url");
         }
         if (url.startsWith("//")) {
-            url = "https:" + url;
+            url = "http:" + url;
         }
         if (!url.startsWith("http")) {
             return null;
@@ -1282,7 +1422,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void stopLoadWebView(boolean destroy) {
-    	if (mActivity == null) return;
+        if (mActivity == null) return;
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1313,10 +1453,10 @@ public class PlayFragment extends BaseLazyFragment {
 
     boolean checkVideoFormat(String url) {
         try{
-        	if (url.contains("url=http") || url.contains(".html")) {
+            if (url.contains("url=http") || url.contains(".html")) {
                 return false;
             }
-            if (sourceBean.getType() == 3) { 
+            if (sourceBean.getType() == 3) {
                 Spider sp = ApiConfig.get().getCSP(sourceBean);
                 if (sp != null && sp.manualVideoCheck()){
                     return sp.isVideoFormat(url);
@@ -1451,7 +1591,7 @@ public class PlayFragment extends BaseLazyFragment {
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             return false;
         }
-        
+
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             return false;
@@ -1670,7 +1810,6 @@ public class PlayFragment extends BaseLazyFragment {
                 return null;
             }
 
-
             boolean ad;
             if (!loadedUrls.containsKey(url)) {
                 ad = AdBlocker.isAd(url);
@@ -1712,7 +1851,6 @@ public class PlayFragment extends BaseLazyFragment {
 
         @Override
         public boolean shouldOverrideUrlLoading(XWalkView view, String s) {
-            mXwalkWebView.loadUrl(s);
             return false;
         }
 
