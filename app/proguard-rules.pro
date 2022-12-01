@@ -203,7 +203,7 @@
 -keep class com.xunlei.downloadlib.** {*;}
 
 # quickjs引擎
--keep class com.quickjs.** {*;}
+-keep class com.github.tvbox.quickjs.** {*;}
 # 支持影视的ali相关的jar
 -keep class com.google.gson.**{*;}
 
