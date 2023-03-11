@@ -1,4 +1,4 @@
-rootProject.name = "四个圈影视"
+rootProject.name = "轻风TV影视"
 include ':app'
 include ':player'
 include ':quickjs'
